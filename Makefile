@@ -2,9 +2,10 @@ PROJECT_NAME := "keyhouse"
 GIT_COMMIT   := $(shell git describe --dirty=-unsupported --always --tags --long || echo pre-commit)
 BUILD_NUMBER ?= 0
 
-IMAGE_NAME    := $(PROJECT_NAME)
-IMAGE_VERSION := $(GIT_COMMIT)-$(BUILD_NUMBER)
-IMAGE_TAG     := "$(IMAGE_NAME):$(IMAGE_VERSION)"
+DOCKER_REPOSITORY := "docker.io/skriptvalley"
+IMAGE_NAME        := $(DOCKER_REPOSITORY)/$(PROJECT_NAME)
+IMAGE_VERSION     := $(GIT_COMMIT)-$(BUILD_NUMBER)
+IMAGE_TAG         := "$(IMAGE_NAME):$(IMAGE_VERSION)"
 
 .PHONY: deps
 deps: go-mod
