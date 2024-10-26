@@ -7,14 +7,13 @@ IMAGE_NAME        := $(DOCKER_REPOSITORY)/$(PROJECT_NAME)
 IMAGE_VERSION     := $(GIT_COMMIT)-$(BUILD_NUMBER)
 IMAGE_TAG         := "$(IMAGE_NAME):$(IMAGE_VERSION)"
 
-.PHONY: deps
-deps: go-mod
-
+# go targets
 .PHONY: go-mod
 go-mod:
 	@go mod tidy
 	@go mod vendor
 
+# proto targets
 .PHONY: clean-proto
 clean-proto:
 	@rm -rf pkg/pb/*
@@ -30,5 +29,20 @@ protogen-backend:
 	./proto/*.proto
 
 # docker targets
+.PHONE: docker-dev docker-dev-build docker-dev-push docker docker-build docker-push
+
+docker-dev: docker-dev-build docker-dev-push
+
+docker-dev-build:
+	@docker build --platform linux/amd64 -f docker/Dockerfile -t $(IMAGE_TAG)-dev .
+
+docker-dev-push:
+	@docker push $(IMAGE_TAG)-dev
+
+docker: docker-build docker-push
+
 docker-build:
-	@docker build --platform linux/amd64 -f docker/Dockerfile -t $(IMAGE_TAG) .
+	@docker build --platform linux/amd64 -f docker/Dockerfile -t $(IMAGE_TAG)-dev .
+
+docker-push:
+	@docker push $(IMAGE_TAG)
