@@ -1,2 +1,2 @@
 # keyhouse
-An OAuth server to manage user access
+A service implementation of secrets vault.
