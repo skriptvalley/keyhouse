@@ -33,8 +33,10 @@ func NewServer(cfg *config.Config, logger *zap.Logger) *Server {
 
 	// Create gRPC server
 	grpcOpts := []grpc.ServerOption{
-		grpc.UnaryInterceptor(middleware.GRPCLoggingMiddleware(logger)),  // Add the logging middleware
-		grpc.UnaryInterceptor(middleware.GRPCRecoveryMiddleware(logger)), // Add the recovery middleware
+		grpc.ChainUnaryInterceptor(
+			middleware.GRPCLoggingMiddleware(logger),  // Add the logging middleware
+			middleware.GRPCRecoveryMiddleware(logger), // Add the recovery middleware
+		),
 	}
 	grpcSrv := grpc.NewServer(grpcOpts...)
 	// Register the service with the gRPC server
