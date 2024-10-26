@@ -1,0 +1,27 @@
+# Stage 1: Build the binary
+FROM golang:1.22.5
+
+# Install build dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    git \
+    curl
+
+# Set working directory
+WORKDIR /app
+
+# Cache dependencies for faster rebuilds
+COPY go.mod go.sum ./
+RUN go mod tidy && \
+    go mod vendor
+
+# Copy source code and build the app
+COPY . .
+RUN go build -o keyhouse ./cmd/main.go
+
+# Expose necessary ports
+EXPOSE 8080 30100
+EXPOSE 8081 30101
+
+# Run the binary
+CMD ["/app/keyhouse"]
