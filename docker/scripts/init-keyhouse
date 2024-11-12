@@ -1,0 +1,75 @@
+#!/bin/bash
+
+APP_STATE_DOWN="down"
+APP_STATE_LOCKED="locked"
+APP_STATE_READY="ready"
+
+export REDISCLI_AUTH="$REDIS_PASSWORD"
+
+# Function to get Redis value
+get_redis_value() {
+  local key="$1"
+  redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" GET "$key"
+}
+
+# Function to check if Redis connection works
+check_redis_connection() {
+  redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" PING >/dev/null 2>&1
+}
+
+# Function to initialize app
+init_app() {
+  local current_app_state
+  current_app_state=$(get_redis_value "state")
+
+  if [ -z "$current_app_state" ]; then
+    echo "Error: Unable to retrieve app state from Redis."
+    exit 1
+  fi
+
+  if [ "$current_app_state" = "$APP_STATE_DOWN" ]; then
+    echo "Initializing app..."
+    init_code=$(get_redis_value "init_code")
+
+    if [ -z "$init_code" ]; then
+      echo "Error: Unable to retrieve init code from Redis."
+      exit 1
+    fi
+
+    echo "Use the below init code to initialize keyhouse"
+    echo "-----------------------------"
+    echo "Init code: $init_code"
+    echo "-----------------------------"
+
+  elif [ "$current_app_state" = "$APP_STATE_LOCKED" ]; then
+    active_keys=$(get_redis_value "active_keys_count")
+
+    if [ -z "$active_keys" ] || ! [[ $active_keys =~ ^[0-9]+$ ]]; then
+      echo "Error: Invalid or missing value for active keys in Redis."
+      exit 1
+    fi
+
+    remaining_keys=$((3 - active_keys))
+    echo "-----------------------------"
+    echo "App is locked. Need $remaining_keys keyholders more to unlock keyhouse."
+    echo "-----------------------------"
+    exit 1
+
+  elif [ "$current_app_state" = "$APP_STATE_READY" ]; then
+    echo "-----------------------------"
+    echo "App is already initialized and unlocked."
+    echo "-----------------------------"
+
+  else
+    echo "Error: Unknown app state in Redis."
+    exit 1
+  fi
+}
+
+# Main script execution
+if ! check_redis_connection; then
+  echo "Error: Unable to connect to Redis. Please check your configuration."
+  exit 1
+fi
+
+init_app

@@ -1,0 +1,54 @@
+networks:
+  keyhouse-nw:
+    driver: bridge
+
+services:
+  redis:
+    image: redis:6.2-alpine
+    container_name: redis
+    networks:
+      - keyhouse-nw
+    ports:
+      - "6379:6379"
+    command: [
+      "redis-server",
+      "--requirepass", "admin",
+      "--appendonly", "yes",
+      "--databases", "1"
+    ]
+
+  postgres:
+    image: postgres:13-alpine
+    container_name: postgres
+    networks:
+      - keyhouse-nw
+    environment:
+      POSTGRES_USER: keystore_user
+      POSTGRES_PASSWORD: keystore_pw
+      POSTGRES_DB: keystore_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Persistent volume for Postgres data
+
+  keyhouse:
+    image: skriptvalley/keyhouse:${IMAGE_VERSION}
+    container_name: keyhouse
+    networks:
+      - keyhouse-nw
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    command:
+      - "/app/keyhouse"
+      - "--app-version=v1.0.0"
+      - "--log-level=debug"
+      - "--swagger-enabled=true"
+      - "--swagger-dir=./pkg/pb/docs"
+      - "--redis-host=redis"
+      - "--redis-port=6379"
+      - "--redis-password=admin"
+
+volumes:
+  postgres_data:
+    driver: local

@@ -1,0 +1,5 @@
+host: postgres
+port: 5432
+user: keystore_user
+password: keystore_pw
+dbname: keystore_db

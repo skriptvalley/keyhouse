@@ -9,7 +9,6 @@ import (
 
 func main() {
 	cfg := config.LoadConfig()
-
 	log := logger.NewLogger(cfg.LogLevel)
 	log.Info("Application starting", zap.Any("config", cfg))
 

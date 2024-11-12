@@ -5,7 +5,9 @@ FROM golang:1.22.5
 RUN apt-get update && \
     apt-get install -y \
     git \
-    curl
+    curl \
+    redis-tools && \
+    apt-get clean
 
 # Set working directory
 WORKDIR /app
@@ -17,11 +19,13 @@ RUN go mod tidy && \
 
 # Copy source code and build the app
 COPY . .
-RUN go build -o keyhouse ./cmd/main.go
+RUN mkdir -p /var/db && \
+    mv docker/dev-configs/* /var/db/ && \
+    mv docker/scripts/init-keyhouse /usr/local/bin/ && \
+    go build -o keyhouse ./cmd/main.go
 
-# Expose necessary ports
-EXPOSE 8080 30100
-EXPOSE 8081 30101
+# Copy Swagger UI static files (assumes `swagger-ui` is in your project root)
+COPY swagger-ui /app/swagger-ui
 
 # Run the binary
 CMD ["/app/keyhouse"]

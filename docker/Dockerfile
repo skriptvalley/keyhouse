@@ -16,8 +16,20 @@ RUN go mod tidy && \
 COPY . .
 RUN go build -o keyhouse ./cmd/main.go
 
+# Copy Swagger UI static files (assumes `swagger-ui` is in your project root)
+COPY swagger-ui /app/swagger-ui
+
 # Stage 2: Final image
 FROM alpine:3.18
+
+# Install redis-cli and essential tools
+RUN apk add --no-cache \
+    bash \
+    vim \
+    curl \
+    wget \
+    less \
+    redis
 
 # Set up a non-root user and group
 RUN addgroup -S keyholder && adduser -S admin -G keyholder
@@ -25,6 +37,7 @@ RUN addgroup -S keyholder && adduser -S admin -G keyholder
 # Set working directory and copy built files from builder stage
 WORKDIR /app
 COPY --from=builder /app/keyhouse /app/keyhouse
+COPY --from=builder /app/swagger-ui /app/swagger-ui
 COPY --from=builder /app/pkg/pb/docs /app/docs
 
 # Grant ownership and restrict permissions for security
@@ -32,10 +45,6 @@ RUN chown -R admin:keyholder /app && chmod -R 755 /app
 
 # Switch to non-root user
 USER admin
-
-# Expose necessary ports
-EXPOSE 8080 30100
-EXPOSE 8081 30101
 
 # Run the binary
 CMD ["/app/keyhouse"]

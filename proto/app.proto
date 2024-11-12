@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package com.skriptvalley.keyhouse;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "/app;app";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Keyhouse API";
+    description: "This is the API documentation for Keyhouse.";
+    version: "v0.0.1";
+  };
+  schemes: HTTP;
+  schemes: HTTPS;
+};
+
+// Request message for GetStatus
+message StatusRequest {}
+
+// Response message for GetStatus
+message StatusResponse {
+  // Name of the service
+  string service = 1;
+  
+  // Version of the service
+  string version = 2;
+  
+  // Current status of the service (e.g., "OK", "ERROR")
+  string status = 3;
+  
+  // Timestamp when the status was retrieved
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+message InitRequest {
+  // Init code
+  string code = 1;
+}
+
+message InitResponse {
+  // Init Status
+  string status = 1;
+
+  // Operation status message
+  string message = 2;
+
+  // List of 5 keys for keyholders
+  repeated string keyholders = 3; 
+}
+
+message ActivateKeyRequest {
+  // Activation key
+  string keyholder = 1;
+}
+
+message ActivateKeyResponse {
+  // Keyholder status
+  string status = 1;
+
+  // Operation status message
+  string message = 2;
+}
+
+// Init service definition
+service App {
+  // GetStatus RPC
+  // Returns the current status of the Keyhouse service
+  rpc GetStatus (StatusRequest) returns (StatusResponse) {
+    option (google.api.http) = {
+      get: "/v1/status"
+    };
+  }
+
+  // InitKeyhouse RPC
+  // Returns status of app after initializing
+  rpc InitKeyhouse (InitRequest) returns (InitResponse) {
+    option (google.api.http) = {
+      post: "/v1/init"
+      body: "code"
+    };
+  }
+
+  // ActivateKey RPC
+  // Returns status of app after activating given keyholder 
+  rpc ActivateKey (ActivateKeyRequest) returns (ActivateKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/activate"
+      body: "keyholder"
+    };
+  }
+}
